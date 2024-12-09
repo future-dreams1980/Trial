@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Scientific Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.10.0/math.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      width: 450px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .display {
+      width: 100%;
+      height: 60px;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      text-align: right;
+      background-color: #f9f9f9;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    button {
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button.function {
+      background-color: #17a2b8;
+    }
+    button.clear {
+      background-color: #dc3545;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .hidden {
+      display: none;
+    }
+    .secondary-page {
+      display: none;
+    }
+    .secondary-page.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <input type="text" id="display" class="display" readonly>
+    <div class="buttons">
+      <!-- Number Buttons (Reorganized) -->
+      <button onclick="append('9')">9</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('7')">7</button>
+      <button class="clear" onclick="clearDisplay()">C</button>
+      <button onclick="append('6')">6</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('4')">4</button>
+      <button onclick="erase()">Erase</button>
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button onclick="calculate()">=</button>
+      <button style="grid-column: span 2;" onclick="append('0')">0</button>
+      <button onclick="append('.')">.</button>
+      <button onclick="append('+')">+</button>
+      <button onclick="append('-')">−</button>
+      <button onclick="append('*')">×</button>
+      <button onclick="append('/')">÷</button>
+      <button onclick="calculatePercentage()">%</button>
+      
+      <!-- Math Functions -->
+      <button class="function" onclick="calculateFunction('log')">log</button>
+      <button class="function" onclick="calculateFunction('ln')">ln</button>
+      <button class="function" onclick="calculateFunction('sqrt')">√</button>
+      <button class="function" onclick="calculateFunction('nPr')">nPr</button>
+      <button class="function" onclick="calculateFunction('nCr')">nCr</button>
+      <button class="function" onclick="toggleFunctions()">Math ↔ Solve</button>
+      <button class="function" onclick="solveEquation()">Solve Eq.</button>
+      <button class="function" onclick="switchPage()">Units ↔ Age</button>
+    </div>
+    
+    <!-- Secondary Page (Unit Conversion & Age Calculation) -->
+    <div id="secondaryPage" class="secondary-page">
+      <h3>Unit Conversion and Age Calculation</h3>
+      <div>
+        <label>Pressure Conversion (Pa to atm):</label>
+        <input type="number" id="pressureInput" placeholder="Enter value in Pa">
+        <button onclick="convertPressure()">Convert</button>
+        <div id="pressureResult"></div>
+      </div>
+      <div>
+        <label>Age Calculation:</label>
+        <input type="date" id="birthDate">
+        <button onclick="calculateAge()">Calculate Age</button>
+        <div id="ageResult"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    let history = [];
+
+    // Append value to display
+    function append(value) {
+      display.value += value;
+    }
+
+    // Clear the display
+    function clearDisplay() {
+      display.value = '';
+    }
+
+    // Erase the last character
+    function erase() {
+      display.value = display.value.slice(0, -1);
+    }
+
+    // Save to history
+    function saveToHistory(result) {
+      history.push(result);
+      if (history.length > 10) history.shift();
+      console.log('History:', history);
+    }
+
+    // Percentage calculation
+    function calculatePercentage() {
+      try {
+        display.value = (parseFloat(display.value) / 100).toFixed(4);
+      } catch {
+        display.value = 'Error';
+      }
+    }
+
+    // Logarithmic and factorial calculations
+    function calculateFunction(func) {
+      try {
+        let result;
+        if (func === 'log') {
+          result = math.log10(parseFloat(display.value));
+        } else if (func === 'ln') {
+          result = math.log(parseFloat(display.value));
+        } else if (func === 'sqrt') {
+          result = math.sqrt(parseFloat(display.value));
+        } else if (func === 'nPr') {
+          const [n, r] = display.value.split(',').map(Number);
+          result = math.factorial(n) / math.factorial(n - r);
+        } else if (func === 'nCr') {
+          const [n, r] = display.value.split(',').map(Number);
+          result = math.factorial(n) / (math.factorial(r) * math.factorial(n - r));
+        }
+        display.value = result.toFixed(4);
+        saveToHistory(result);
+      } catch {
+        display.value = 'Error';
+      }
+    }
+
+    // Solve mathematical expression
+    function calculate() {
+      try {
+        const result = math.evaluate(display.value);
+        display.value = result;
+        saveToHistory(result);
+      } catch {
+        display.value = 'Error';
+      }
+    }
+
+    // Convert Pressure
+    function convertPressure() {
+      const pressurePa = parseFloat(document.getElementById('pressureInput').value);
+      const result = (pressurePa / 101325).toFixed(4);
+      document.getElementById('pressureResult').textContent = `${pressurePa} Pa = ${result} atm`;
+    }
+
+    // Calculate Age
+    function calculateAge() {
+      const birthDate = new Date(document.getElementById('birthDate').value);
+      const age = new Date().getFullYear() - birthDate.getFullYear();
+      document.getElementById('ageResult').textContent = `Your age is ${age} years.`;
+    }
+
+    // Toggle Pages
+    function switchPage() {
+      const page = document.getElementById('secondaryPage');
+      page.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>
